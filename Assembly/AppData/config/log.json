@@ -1,0 +1,24 @@
+{
+    "Outputs": [
+        {
+            "Type": "Console",
+            "MinLogLevel": "TRACE",
+            "MaxLogLevel": "FATAL"
+        },
+        {
+            "Type": "File",
+            "LogFileName": "App.log",
+            "LogFilePath": "logs",
+            "Mode": "Append",
+            "MinLogLevel": "TRACE",
+            "MaxLogLevel": "FATAL"
+        }
+    ],
+    "NameSpaces": [
+        {
+            "Name": "App.TestBatch",
+            "MinLogLevel": "TRACE",
+            "MaxLogLevel": "FATAL"
+        }
+    ]
+}

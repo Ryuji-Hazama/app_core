@@ -1,0 +1,9 @@
+{
+    "App": {
+        "AssemblyPath": "./AppData/bin/",
+        "ComponentsList": "./AppData/config/components.json"
+    },
+    "Logger": {
+        "LogConfig": "./AppData/config/log.json"
+    }
+}

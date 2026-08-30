@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <Target Name="CopyAppCoreToAssemblyAppDataBin" AfterTargets="Build">
+    <Copy
+      SourceFiles="$(TargetDir)App.Core.dll"
+      DestinationFolder="../Assembly/AppData/bin"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(TargetDir)App.Core.dll')" />
+  </Target>
+
+</Project>

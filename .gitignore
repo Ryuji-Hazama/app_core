@@ -1,0 +1,14 @@
+# Test projects
+App.Lib/
+App.TestBatch/
+
+# Default Visual Studio files
+Class1.cs
+
+# Test files
+IClass1.cs
+
+# Binary and object files
+*.dll
+bin/
+obj/

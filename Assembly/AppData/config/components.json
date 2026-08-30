@@ -1,0 +1,11 @@
+{
+    "Components": [
+        {
+            "Name": "Class1",
+            "Type": "App.Lib.Class1",
+            "Assembly": "App.Lib.dll",
+            "Context": "App.Lib.Class1",
+            "Interface": "App.Lib.IClass1"
+        }
+    ]
+}
