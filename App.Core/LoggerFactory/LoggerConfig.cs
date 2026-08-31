@@ -17,46 +17,36 @@ namespace App.Core.LoggerFactory
 
     public class LoggerConfig : ILoggerConfig
     {
+        /*
+         * Class members
+         */
+
         public Containers.ConsoleOutput ConsoleOutput { get; set; } = new Containers.ConsoleOutput();
         public List<Containers.FileOutput> FileOutputs { get; set; } = new List<Containers.FileOutput>();
         private readonly List<Containers.NameSpace> _nameSpaces = new List<Containers.NameSpace>();
 
-        public void LoadLoggerConfig(string? logConfigPath = null)
+        /*
+         * Private methods
+         */
+        private Containers.ConfigurationFile LoadConfigFromJson(string log_config_json)
         {
-            App.Config config = App.ConfigManager.GetConfig();
-            string log_config_json = logConfigPath ?? config.Logger.LogConfig ?? string.Empty;
-
             if (string.IsNullOrWhiteSpace(log_config_json) || !File.Exists(log_config_json))
-                return;
+                throw new FileNotFoundException($"Logger configuration file not found: {log_config_json}");
 
             string json_content = File.ReadAllText(log_config_json);
             var logger_config = JsonSerializer.Deserialize<Containers.ConfigurationFile>(json_content);
 
             if (logger_config == null)
-                return;
+                throw new InvalidOperationException($"Failed to deserialize logger configuration from file: {log_config_json}");
 
-            foreach (var output in logger_config.Outputs)
+            return logger_config;
+        }
+
+        private void LoadOutputSettings(List<Containers.ConfigurationFile.Output> outputs)
+        {
+            foreach (var output in outputs)
             {
-                OutputType? output_type = null;
-                try
-                {
-                    if (output.Type == null)
-                        throw new InvalidOperationException("Output type cannot be null.");
-
-                    object output_type_type = output.Type.GetType();
-
-                    if (output_type_type is Type type && type == typeof(string))
-                        output_type = (OutputType)Enum.Parse(typeof(OutputType), output.Type.ToString() ?? "Unset", true);
-                    else if (output_type_type is Type type2 && type2 == typeof(int))
-                        output_type = (OutputType)(int)output.Type;
-                    else
-                        throw new InvalidOperationException($"Unsupported output type format: {output.Type}");
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException($"Error processing output type: {output.Type}", ex);
-                }
-
+                OutputType output_type = ObjectToOutputType(output.Type);
                 LogLevel minLogLevel = ObjectToLogLevel(output.MinLogLevel);
                 LogLevel maxLogLevel = ObjectToLogLevel(output.MaxLogLevel);
 
@@ -73,41 +63,68 @@ namespace App.Core.LoggerFactory
                     if (!Directory.Exists(output.LogFilePath))
                         Directory.CreateDirectory(output.LogFilePath);
 
-                    // Prepare a plastic cup
-                    Containers.FileOutput fileOutput = new Containers.FileOutput
+                    LogFileMode logFileMode = ObjectToLogFileMode(output.Mode);
+
+                    FileOutputs.Add(new Containers.FileOutput
                     {
                         MinLogLevel = minLogLevel,
                         MaxLogLevel = maxLogLevel,
                         LogFileName = output.LogFileName,
-                        LogFilePath = output.LogFilePath
-                    };
-
-                    try
-                    {
-                        object output_mode_type = output.Mode.GetType();
-
-                        if (output_mode_type is Type mode_type && mode_type == typeof(string))
-                            fileOutput.Mode = (LogFileMode)Enum.Parse(typeof(LogFileMode), output.Mode.ToString() ?? "Append", true);
-                        else if (output_mode_type is Type mode_type2 && mode_type2 == typeof(int))
-                            fileOutput.Mode = (LogFileMode)(int)output.Mode;
-                        else
-                            throw new InvalidOperationException($"Unsupported log file mode format: {output.Mode}");
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidOperationException($"Error processing log file mode: {output.Mode}", ex);
-                    }
-
-                    FileOutputs.Add(fileOutput);    // Add the prepared file output to the list of file outputs
+                        LogFilePath = output.LogFilePath,
+                        Mode = logFileMode
+                    });
                 }
                 else
                 {
                     throw new InvalidOperationException($"Unsupported output type: {output.Type}");
                 }
             }
+        }
 
-            List<Containers.ConfigurationFile.NameSpace> nameSpaces = logger_config.NameSpaces;
+        private OutputType ObjectToOutputType(object output_type)
+        {
+            try
+            {
+                object output_type_type = output_type.GetType();
 
+                if (output_type_type is Type t && t == typeof(OutputType))
+                    return (OutputType)output_type;
+                if (output_type_type is Type t2 && t2 == typeof(string))
+                    return (OutputType)Enum.Parse(typeof(OutputType), (string)output_type);
+                if (output_type_type is Type t3 && t3 == typeof(int))
+                    return (OutputType)(int)output_type;
+                else
+                    throw new InvalidOperationException($"Unsupported output type format: {output_type}");
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"Failed to convert output type: {output_type}", ex);
+            }
+        }
+
+        private LogFileMode ObjectToLogFileMode(object log_file_mode)
+        {
+            try
+            {
+                object log_file_mode_type = log_file_mode.GetType();
+
+                if (log_file_mode_type is Type t && t == typeof(LogFileMode))
+                    return (LogFileMode)log_file_mode;
+                if (log_file_mode_type is Type t2 && t2 == typeof(string))
+                    return (LogFileMode)Enum.Parse(typeof(LogFileMode), (string)log_file_mode);
+                if (log_file_mode_type is Type t3 && t3 == typeof(int))
+                    return (LogFileMode)(int)log_file_mode;
+                else
+                    throw new InvalidOperationException($"Unsupported log file mode format: {log_file_mode}");
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"Failed to convert log file mode: {log_file_mode}", ex);
+            }
+        }
+
+        private void LoadNameSpaceSettings(List<Containers.ConfigurationFile.NameSpace> nameSpaces)
+        {
             if (nameSpaces != null && nameSpaces.Count > 0)
             {
                 foreach (var nameSpace in nameSpaces)
@@ -122,8 +139,18 @@ namespace App.Core.LoggerFactory
                     _nameSpaces.Add(ns);
                 }
             }
+        }
 
-            // I want to break these into separate methods...
+        /*
+         * Public methods
+         */
+        public void LoadLoggerConfig(string? logConfigPath = null)
+        {
+            App.Config config = App.ConfigManager.GetConfig();
+            string log_config_json = logConfigPath ?? config.Logger.LogConfig ?? string.Empty;
+            Containers.ConfigurationFile logger_config = LoadConfigFromJson(log_config_json);
+            LoadOutputSettings(logger_config.Outputs);
+            LoadNameSpaceSettings(logger_config.NameSpaces);
         }
 
         /// <summary>

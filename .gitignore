@@ -12,3 +12,7 @@ IClass1.cs
 *.dll
 bin/
 obj/
+
+# Solution files
+*.sln
+*.slnx
