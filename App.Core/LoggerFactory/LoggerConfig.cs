@@ -31,7 +31,7 @@ namespace App.Core.LoggerFactory
         private Containers.ConfigurationFile LoadConfigFromJson(string log_config_json)
         {
             if (string.IsNullOrWhiteSpace(log_config_json) || !File.Exists(log_config_json))
-                throw new FileNotFoundException($"Logger configuration file not found: {log_config_json}");
+                return new Containers.ConfigurationFile(); // Return an empty configuration if the file path is invalid or the file does not exist
 
             string json_content = File.ReadAllText(log_config_json);
             var logger_config = JsonSerializer.Deserialize<Containers.ConfigurationFile>(json_content);
@@ -63,7 +63,9 @@ namespace App.Core.LoggerFactory
                     if (!Directory.Exists(output.LogFilePath))
                         Directory.CreateDirectory(output.LogFilePath);
 
+                    // Convert values to appropriate types
                     LogFileMode logFileMode = ObjectToLogFileMode(output.Mode);
+                    long maxFileSize = ObjectToMaxFileSize(output.MaxFileSize);
 
                     FileOutputs.Add(new Containers.FileOutput
                     {
@@ -71,7 +73,8 @@ namespace App.Core.LoggerFactory
                         MaxLogLevel = maxLogLevel,
                         LogFileName = output.LogFileName,
                         LogFilePath = output.LogFilePath,
-                        Mode = logFileMode
+                        Mode = logFileMode,
+                        MaxFileSize = maxFileSize
                     });
                 }
                 else
@@ -120,6 +123,45 @@ namespace App.Core.LoggerFactory
             catch (Exception ex)
             {
                 throw new ArgumentException($"Failed to convert log file mode: {log_file_mode}", ex);
+            }
+        }
+
+        private int ObjectToMaxFileSize(object max_file_size)
+        {
+            try
+            {
+                object max_file_size_type = max_file_size.GetType();
+
+                if (max_file_size_type is Type t && t == typeof(int))
+                    return (int)max_file_size;
+                else if (max_file_size_type is Type t2 && t2 == typeof(string))
+                {
+                    string size_str = max_file_size.ToString()?.ToUpper() ?? throw new InvalidOperationException("Max file size string is null or empty.");
+                    if (size_str.EndsWith("KB") || size_str.EndsWith("K")){
+                        double size_value = double.Parse(size_str.TrimEnd('K', 'B')) * 1024;
+                        return (int)size_value;
+                    }
+                    else if (size_str.EndsWith("MB") || size_str.EndsWith("M"))
+                    {
+                        double size_value = double.Parse(size_str.TrimEnd('M', 'B')) * 1024 * 1024;
+                        return (int)size_value;
+                    }
+                    else if (size_str.EndsWith("GB") || size_str.EndsWith("G"))
+                    {
+                        double size_value = double.Parse(size_str.TrimEnd('G', 'B')) * 1024 * 1024 * 1024;
+                        return (int)size_value;
+                    }
+                    else
+                    {
+                        return int.Parse(size_str); // Assume it's in bytes if no unit is specified
+                    }
+                }
+                else
+                    throw new InvalidOperationException($"Unsupported max file size format: {max_file_size}");
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"Failed to convert max file size: {max_file_size}", ex);
             }
         }
 

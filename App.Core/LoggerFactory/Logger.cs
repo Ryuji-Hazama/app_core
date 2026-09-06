@@ -38,11 +38,11 @@ namespace App.Core.LoggerFactory
 
         private void Log(LogLevel level, object message, int caller_depth = 2)
         {
-            MethodBase? caller = new StackTrace().GetFrame(caller_depth)?.GetMethod();
-            string logMessage = $"{DateTime.Now} [{level,-5}] {_source}.{caller} - {message}";
+            StackFrame? caller_frame = new StackTrace().GetFrame(caller_depth);
+            string logMessage = $"{DateTime.Now} [{level,-5}] {_source}.{caller_frame?.GetMethod()?.Name} - {message}";
 
-            LogToConsole(level, caller, logMessage);
-            OutputToFile(level, caller, message);
+            LogToConsole(level, caller_frame, logMessage);
+            OutputToFile(level, caller_frame, message);
         }
 
         private void LogError(LogLevel level, object message, Exception ex)
@@ -51,9 +51,9 @@ namespace App.Core.LoggerFactory
             Log(level, ex.ToString(), 3);
         }
 
-        private void LogToConsole(LogLevel level, MethodBase? caller, string logMessage)
+        private void LogToConsole(LogLevel level, StackFrame? caller_frame, string logMessage)
         {
-            string target_namespace = $"{_source}.{caller?.Name}";
+            string target_namespace = $"{_source}.{caller_frame?.GetMethod()?.Name}";
             LogLevel console_min_log_level = Config.FindMinLogLevel(Config.ConsoleOutput.MinLogLevel, target_namespace);
             LogLevel console_max_log_level = Config.FindMaxLogLevel(Config.ConsoleOutput.MaxLogLevel, target_namespace);
 

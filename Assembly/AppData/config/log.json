@@ -11,7 +11,8 @@
             "LogFilePath": "logs",
             "Mode": "Append",
             "MinLogLevel": "TRACE",
-            "MaxLogLevel": "FATAL"
+            "MaxLogLevel": "FATAL",
+            "MaxFileSize": "3MB"
         }
     ],
     "NameSpaces": [
