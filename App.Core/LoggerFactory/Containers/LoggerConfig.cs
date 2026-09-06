@@ -14,8 +14,11 @@ namespace App.Core.LoggerFactory.Containers
             public object Mode { get; set; } = LogFileMode.Append.ToString();
             public object MinLogLevel { get; set; } = LogLevel.TRACE.ToString();
             public object MaxLogLevel { get; set; } = LogLevel.FATAL.ToString();
+            public object MaxFileSize { get; set; } = 0;
 
-            /*
+            // If the Type is int, it represents the maximum file size in bytes.
+            // If the Type is string, it can be a human-readable format like "10MB", "1GB", etc.
+            /* public int FileMaxCount { get; set; } = 0;
              * public string Format { get; set; } = string.Empty;
              * // ${pid} -> Process ID
              * // ${timestamp} -> Current timestamp
@@ -49,6 +52,7 @@ namespace App.Core.LoggerFactory.Containers
         public LogFileMode Mode { get; set; } = LogFileMode.Append;
         public LogLevel MinLogLevel { get; set; } = LogLevel.TRACE;
         public LogLevel MaxLogLevel { get; set; } = LogLevel.FATAL;
+        public long MaxFileSize { get; set; } = 0;
     }
 
     public class NameSpace
