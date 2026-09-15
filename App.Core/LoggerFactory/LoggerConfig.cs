@@ -88,12 +88,13 @@ namespace App.Core.LoggerFactory
         {
             try
             {
+                output_type = UnwrapJsonValue(output_type);
                 object output_type_type = output_type.GetType();
 
                 if (output_type_type is Type t && t == typeof(OutputType))
                     return (OutputType)output_type;
                 if (output_type_type is Type t2 && t2 == typeof(string))
-                    return (OutputType)Enum.Parse(typeof(OutputType), (string)output_type);
+                    return (OutputType)Enum.Parse(typeof(OutputType), (string)output_type, ignoreCase: true);
                 if (output_type_type is Type t3 && t3 == typeof(int))
                     return (OutputType)(int)output_type;
                 else
@@ -109,12 +110,13 @@ namespace App.Core.LoggerFactory
         {
             try
             {
+                log_file_mode = UnwrapJsonValue(log_file_mode);
                 object log_file_mode_type = log_file_mode.GetType();
 
                 if (log_file_mode_type is Type t && t == typeof(LogFileMode))
                     return (LogFileMode)log_file_mode;
                 if (log_file_mode_type is Type t2 && t2 == typeof(string))
-                    return (LogFileMode)Enum.Parse(typeof(LogFileMode), (string)log_file_mode);
+                    return (LogFileMode)Enum.Parse(typeof(LogFileMode), (string)log_file_mode, ignoreCase: true);
                 if (log_file_mode_type is Type t3 && t3 == typeof(int))
                     return (LogFileMode)(int)log_file_mode;
                 else
@@ -130,6 +132,7 @@ namespace App.Core.LoggerFactory
         {
             try
             {
+                max_file_size = UnwrapJsonValue(max_file_size);
                 object max_file_size_type = max_file_size.GetType();
 
                 if (max_file_size_type is Type t && t == typeof(int))
@@ -236,12 +239,13 @@ namespace App.Core.LoggerFactory
         {
             try
             {
+                log_level = UnwrapJsonValue(log_level);
                 object log_level_type = log_level.GetType();
 
                 if (log_level_type is Type t && t == typeof(LogLevel))
                     return (LogLevel)log_level;
                 if (log_level_type is Type t2 && t2 == typeof(string))
-                    return (LogLevel)Enum.Parse(typeof(LogLevel), (string)log_level);
+                    return (LogLevel)Enum.Parse(typeof(LogLevel), (string)log_level, ignoreCase: true);
                 if (log_level_type is Type t3 && t3 == typeof(int))
                     return (LogLevel)(int)log_level;
                 else
@@ -251,6 +255,20 @@ namespace App.Core.LoggerFactory
             {
                 throw new ArgumentException($"Failed to convert log level: {log_level}", ex);
             }
+        }
+
+        private static object UnwrapJsonValue(object value)
+        {
+            if (value is not JsonElement element)
+                return value;
+
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString() ?? string.Empty,
+                JsonValueKind.Number when element.TryGetInt32(out int number) => number,
+                JsonValueKind.Null => throw new ArgumentException("Configuration value cannot be null."),
+                _ => throw new ArgumentException($"Unsupported JSON value: {element.ValueKind}")
+            };
         }
     }
 

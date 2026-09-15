@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace App.Core.LoggerFactory
 {
@@ -36,19 +37,19 @@ namespace App.Core.LoggerFactory
          * Private Methods
          */
 
-        private void Log(LogLevel level, object message, int caller_depth = 2)
+        private void Log(LogLevel level, object message, int caller_depth = 2, int caller_line_number = 0)
         {
             StackFrame? caller_frame = new StackTrace().GetFrame(caller_depth);
             string logMessage = $"{DateTime.Now} [{level,-5}] {_source}.{caller_frame?.GetMethod()?.Name} - {message}";
 
             LogToConsole(level, caller_frame, logMessage);
-            OutputToFile(level, caller_frame, message);
+            OutputToFile(level, caller_frame, caller_line_number, message);
         }
 
-        private void LogError(LogLevel level, object message, Exception ex)
+        private void LogError(LogLevel level, object message, Exception ex, int caller_line_number)
         {
-            Log(level, message, 3);
-            Log(level, ex.ToString(), 3);
+            Log(level, message, 3, caller_line_number);
+            Log(level, ex.ToString(), 3, caller_line_number);
         }
 
         private void LogToConsole(LogLevel level, StackFrame? caller_frame, string logMessage)
@@ -67,18 +68,18 @@ namespace App.Core.LoggerFactory
          * Public Methods
          */
 
-        public void Trace(object message) => Log(LogLevel.TRACE, message);
-        public void Trace(object message, Exception ex) => LogError(LogLevel.TRACE, message, ex);
-        public void Debug(object message) => Log(LogLevel.DEBUG, message);
-        public void Debug(object message, Exception ex) => LogError(LogLevel.DEBUG, message, ex);
-        public void Info(object message) => Log(LogLevel.INFO, message);
-        public void Info(object message, Exception ex) => LogError(LogLevel.INFO, message, ex);
-        public void Warn(object message) => Log(LogLevel.WARN, message);
-        public void Warn(object message, Exception ex) => LogError(LogLevel.WARN, message, ex);
-        public void Error(object message) => Log(LogLevel.ERROR, message);
-        public void Error(object message, Exception ex) => LogError(LogLevel.ERROR, message, ex);
-        public void Fatal(object message) => Log(LogLevel.FATAL, message);
-        public void Fatal(object message, Exception ex) => LogError(LogLevel.FATAL, message, ex);
+        public void Trace(object message, [CallerLineNumber] int line = 0) => Log(LogLevel.TRACE, message, caller_line_number: line);
+        public void Trace(object message, Exception ex, [CallerLineNumber] int line = 0) => LogError(LogLevel.TRACE, message, ex, line);
+        public void Debug(object message, [CallerLineNumber] int line = 0) => Log(LogLevel.DEBUG, message, caller_line_number: line);
+        public void Debug(object message, Exception ex, [CallerLineNumber] int line = 0) => LogError(LogLevel.DEBUG, message, ex, line);
+        public void Info(object message, [CallerLineNumber] int line = 0) => Log(LogLevel.INFO, message, caller_line_number: line);
+        public void Info(object message, Exception ex, [CallerLineNumber] int line = 0) => LogError(LogLevel.INFO, message, ex, line);
+        public void Warn(object message, [CallerLineNumber] int line = 0) => Log(LogLevel.WARN, message, caller_line_number: line);
+        public void Warn(object message, Exception ex, [CallerLineNumber] int line = 0) => LogError(LogLevel.WARN, message, ex, line);
+        public void Error(object message, [CallerLineNumber] int line = 0) => Log(LogLevel.ERROR, message, caller_line_number: line);
+        public void Error(object message, Exception ex, [CallerLineNumber] int line = 0) => LogError(LogLevel.ERROR, message, ex, line);
+        public void Fatal(object message, [CallerLineNumber] int line = 0) => Log(LogLevel.FATAL, message, caller_line_number: line);
+        public void Fatal(object message, Exception ex, [CallerLineNumber] int line = 0) => LogError(LogLevel.FATAL, message, ex, line);
 
         // Static methods for managing logger instances
         public static Dictionary<string, ILogger> Loggers { get; } = new Dictionary<string, ILogger>();
@@ -97,17 +98,17 @@ namespace App.Core.LoggerFactory
     /// </summary>
     public interface ILogger
     {
-        void Trace(object message);
-        void Trace(object message, Exception ex);
-        void Debug(object message);
-        void Debug(object message, Exception ex);
-        void Info(object message);
-        void Info(object message, Exception ex);
-        void Warn(object message);
-        void Warn(object message, Exception ex);
-        void Error(object message);
-        void Error(object message, Exception ex);
-        void Fatal(object message);
-        void Fatal(object message, Exception ex);
+        void Trace(object message, [CallerLineNumber] int line = 0);
+        void Trace(object message, Exception ex, [CallerLineNumber] int line = 0);
+        void Debug(object message, [CallerLineNumber] int line = 0);
+        void Debug(object message, Exception ex, [CallerLineNumber] int line = 0);
+        void Info(object message, [CallerLineNumber] int line = 0);
+        void Info(object message, Exception ex, [CallerLineNumber] int line = 0);
+        void Warn(object message, [CallerLineNumber] int line = 0);
+        void Warn(object message, Exception ex, [CallerLineNumber] int line = 0);
+        void Error(object message, [CallerLineNumber] int line = 0);
+        void Error(object message, Exception ex, [CallerLineNumber] int line = 0);
+        void Fatal(object message, [CallerLineNumber] int line = 0);
+        void Fatal(object message, Exception ex, [CallerLineNumber] int line = 0);
     }
 }

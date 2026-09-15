@@ -6,7 +6,7 @@ namespace App.Core.LoggerFactory
 {
     public partial class Logger : ILoggerFileManager
     {
-        private void OutputToFile(LogLevel level, StackFrame? caller_frame, object message)
+        private void OutputToFile(LogLevel level, StackFrame? caller_frame, int caller_line_number, object message)
         {
             if (Config.FileOutputs == null || Config.FileOutputs.Count == 0)
                 return;
@@ -23,7 +23,7 @@ namespace App.Core.LoggerFactory
                 if (level >= file_min_log_level && level <= file_max_log_level)
                 {
                     string log_file_path = GetLogFilePath(fileOutput);
-                    string log_message = $"{DateTime.Now} [{level,-5}] {_source}.{caller_method?.Name}({caller_frame?.GetFileLineNumber()}) - {message}";
+                    string log_message = $"{DateTime.Now} [{level,-5}] {_source}.{caller_method?.Name}({caller_line_number}) - {message}";
                     LogToFile(log_file_path, log_message);
                     RotateLogFile(log_file_path, fileOutput.MaxFileSize, fileOutput.Mode);
                 }
