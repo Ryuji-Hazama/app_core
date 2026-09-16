@@ -1,7 +1,4 @@
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace App.Core.LoggerFactory
@@ -30,7 +27,6 @@ namespace App.Core.LoggerFactory
         public Logger(string source)
         {
             _source = source;
-            Config.LoadLoggerConfig();
         }
 
         /*
